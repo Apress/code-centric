@@ -1,0 +1,222 @@
+<html>
+
+<head>
+<title>Code Centric: T-SQL Programming with Stored Procedures and Triggers -- Errata</title>
+
+</head>
+
+<body bgcolor="#ffffff" text="#000000" link="#808040" vlink="#000000" alink="#606060">
+<font size="-1">
+<IMG height=155 hspace=0 src="http://www.apress.com/books/coverGraphics/medium/1893115836.gif" width=125 align=top border=0>
+<FONT face="Arial,Helvetica,Univers,Zurich BT" size=-1>
+<h2>Errata</h2>
+<p>
+<h3>Chapter 4</h3>
+
+<h4>Page 130</h4>
+<p>
+Add brackets to SELECT. The code will work as-is until a table name with an embedded space is encountered. The code is correct in Ch04.sql. 
+</p>
+<p>
+<pre>EXEC('SELECT COUNT(*)FROM '+@TableName)</pre>
+</p>
+<p>
+Should be 
+</p>
+<p>
+<pre>EXEC('SELECT COUNT(*)FROM ['+@TableName+']')</pre>
+</p>
+<HR noshade align="center" width="100%" size=2>
+<h3>Chapter 11</h3>
+<h4>Pages 371 &#150; 372</h4>
+<p>
+Code and explanations for the last two examples in the @@ERROR section are incorrect. Starting with the code on the bottom of page 371 and going to the end of the section, the material should be. 
+</p>
+<p>
+<pre>
+CREATE PROCEDURE ps_ErrorHandling_Example 
+AS 
+DECLARE @ErrorMsgID int 
+
+BEGIN TRANSACTION 
+
+INSERT Table1 VALUES  
+SET @ErrorMsgID =@@ERROR  IF @ErrorMsgID &lt;&gt;0 
+ BEGIN 
+  ROLLBACK TRANSACTION 
+  RETURN @ErrorMsgID 
+ END 
+INSERT Table2 VALUES   SET @ErrorMsgID =@@ERROR  IF @ErrorMsgID &lt;&gt;0 
+BEGIN 
+ROLLBACK TRANSACTION 
+RETURN @ErrorMsgID 
+END 
+COMMIT TRANSACTION 
+</pre>
+</p>
+<p>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When either INSERT produces an error, a ROLLBACK is executed, the execution of the procedure is halted and control is returned to the calling application. 
+</p>
+<p>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The GOTO statement can be used to reduce the amount of code needed to implement the type of error handling demonstrated in the previous example. GOTO simply transfers the execution of the procedure to a line defined with a label. The following shows how to use GOTO to modify the previous example. 
+</p>
+
+<p>
+<pre>
+CREATE PROCEDURE ps_ErrorHandling_Example 
+AS 
+DECLARE @ErrorMsgID int 
+  
+  BEGIN TRANSACTION 
+    INSERT Table1 VALUES   SET @ErrorMsgID =@@ERROR  IF @ErrorMsgID &lt;&gt;0 GOTO ErrorHandler 
+    INSERT Table2 VALUES  
+    SET @ErrorMsgID =@@ERROR 
+    IF @ErrorMsgID &lt;&gt;0 
+      GOTO ErrorHandler 
+      COMMIT TRANSACTION 
+
+ErrorHandler: 
+IF @@TRANCOUNT &gt; 0  BEGIN 
+ROLLBACK TRANSACTION 
+RETURN @ErrorMsgID 
+END 
+</pre>
+</p>
+<p>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;When an error is encountered, processing is transferred to the ErrorHandler: label, a ROLLBACK is executed and control is returned to the calling application. The system function @@TRANCOUNT keeps track of the number of open transactions. By default, no open transactions, its value is 0. When a BEGIN TRANSACTION is issued, its value increments by 1. When a COMMIT TRANSACTION is issued, its value decrements by 1. If both INSERT statements succeed and the COMMIT is issued, @@TRANCOUNT's value is 0 when the ROLLBACK is encountered. This produces an error because you cannot issue a ROLLBACK when there are no open transactions. The IF protects this error from happening. 
+</p>
+<HR noshade align="center" width="100%" size=2>
+<h3>Chapter 13</h3>
+
+<h4>Page 452</h4>
+<p>
+CONVERT function is incorrect. The third argument for the CONVERT function should be 1, not 101. The procedure is correct in Ch13.sql. 
+</p>
+<p>
+<pre>
+CONVERT(varchar(8),Intetlog.LogTime,101) 
+</pre>
+</p>
+<p>
+Should be 
+</p>
+<p>
+<pre>
+CONVERT(varchar(8),Intetlog.LogTime,1) 
+</pre>
+</p>
+<h4>Page 454</h4>
+<p>
+Procedure contains errors. All references to &#147;LogSum_LogSummary&#148; should be &#147;LogSummary&#148;. The reference to &#147;Products.asp &#150; DD&#148; should be &#147;Products &#150; DD&#148;. All references to &#147;Contact &#150; DD&#148; should be &#147;Contacts &#150; DD&#148;. The procedure is correct in Ch13.sql.
+</p>
+
+<p>
+<h4>Page 467</h4> Version reference is incorrect. The reference to &#147;Version X&#148; should be &#147;Version 7&#148; 
+</p>
+<HR noshade align="center" width="100%" size=2>
+<p>
+<h3>Chapter 14</h3>
+</p>
+<p>
+<h4>Page 491</h4>
+<p>
+DB diagram is incomplete. A relationship should be shown between Enagements.Eng_UniqueID and SalesCalls.Eng_UniqueID. 
+</p>
+<p>
+<h4>Page 505</h4> 
+<p>Procedure name is incorrect. The ps_DELETE_ParentCompanies procedure should be named: ps_ParentCompanies_DELETE. The procedure is correct in Ch14.sql.
+</p>
+<p>
+<h4>Page 505</h4> Comma is missing after ParCom_UniqueID. A comma is needed after 
+</p>
+<p>
+ParCom_UniqueID in the ps_ParentCompanies_SELECT procedure. The procedure is correct in Ch14.sql. 
+</p>
+<p>
+<h4>Page 510</h4> Add code to check for duplicate SSN. The ps_Employees_INSERT and ps_Employees_UPDATE procedures were modified post-publication to check for a duplicate SSN. Please see Ch14.sql for details and a complete listing; the relevant code is shown here. The procedure is correct in Ch14.sql. 
+</p>
+<p>
+<pre>
+--Verify SSN is unique IF EXISTS (SELECT * 
+FROM Employees 
+WHERE Emp_SSN = @Emp_SSN) 
+BEGIN 
+SET @ReturnCode = 1 RETURN 
+END
+</pre>
+</p>
+<p>
+<h4>Page 512</h4> Columns need to be separated. The name columns in ps_Employees_SELECT_ByUniqueID need to be separated. The procedure is correct in Ch14.sql.
+</p>
+<p>
+<pre>
+Emp_FName+' '+Emp_LName AS EmpName,
+</pre>
+should be 
+</p>
+<pre>
+Emp_FName, Emp_LName, 
+</pre>
+<p>
+<h4>Page 516:</h4>
+<p>
+Procedure has an error. The ps_SalesCalls_INSERT procedure incorrectly references @@IDENTITY. The procedure is correct in Ch14.sql. 
+</p>
+<p>
+<pre>SET @UniqueID = @@IDENTITY</pre>
+</p>
+<p>
+should be
+</p>
+<p>
+<pre>SET @UniqueID = SCOPE_IDENTITY()</pre>
+</p>
+<p>
+<h4>Page 519</h4>
+Procedure is incomplete. The ps_SalesCalls_SELECT_ByUniqueID procedure is missing the code shown below. The procedure is correct in Ch14.sql. 
+</p>
+<p>
+Part I - Build List of Employees 
+</p>
+<p>
+<pre>
+DECLARE @EmployeeList varchar(100) 
+SELECT @EmployeeList = COALESCE(@EmployeeList + ', ', '') + _ CAST(Emp_UniqueID AS varchar(10)) 
+FROM SalesCallsEmployees 
+WHERE SalCal_UniqueID = @SalCal_UniqueID 
+</pre>
+</p>
+
+
+<p>
+<h4>Page 528</h4>
+ASP file is not listed. The SEM_Login.asp file is not listed. It allows a user to login to the application. The file is in Ch14.zip 
+</p>
+<p>
+<h3>Appendix A</h3>
+</p>
+<p>
+<h4>Page 532</h4>
+Proxy server description is misleading. A Proxy Server is rarely used for the purpose of restricting access to a company&#146;s internal network. In general, firewall software is used for this purpose. 
+</p>
+<HR noshade align="center" width="100%" size=2>
+<p>
+<h3>Appendix B</h3>
+</p>
+<p>
+<h4>Page 561</h4> Chapter reference is incorrect. The reference to Chapter 13 should be to Chapter 11.
+</p>
+<p>
+<h4>Page 583</h4>
+<p>Input box references are incorrect. The references to FName and LName in the &lt;HEAD&gt; section should be Emp_FName and Emp_LName respectively. The AppB_EmpAdd.asp file is correct as of 2/23/01. 
+</p>
+
+</BODY>
+
+</HTML>
+
+
+
+</body>
+
+</html>
